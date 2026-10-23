@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全科彈珠大冒險：軌道神工爭霸戰（康軒小三上期中考）</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      user-select: none;
+    }
+    .game-font {
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', cursive, sans-serif;
+    }
+    .marble-shadow {
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    .option-btn {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .option-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+    }
+    .glow-gold {
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.5);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .pulse-hand {
+      animation: pulse-subtle 1.8s infinite ease-in-out;
+    }
+    @keyframes float-particle {
+      0% { transform: translateY(0px) rotate(0deg); opacity: 0.8; }
+      100% { transform: translateY(-50px) rotate(180deg); opacity: 0; }
+    }
+    /* 自訂捲軸 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- 頂部導航與彈珠收集器 -->
+  <header class="bg-slate-900/90 border-b border-indigo-900/60 sticky top-0 z-50 backdrop-blur-md px-4 py-3 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- 標題與標誌 -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg text-2xl">
+          🔮
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-pink-300 to-sky-300 game-font">
+              全科彈珠大冒險
+            </h1>
+            <span class="bg-indigo-700/80 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-bold border border-indigo-500">
+              康軒小三上期中考
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">解開全科題目 ➜ 鋪設特技軌道 ➜ 40顆彈珠掉入手中！</p>
+        </div>
+      </div>
+
+      <!-- 彈珠總收集數計數器 -->
+      <div class="flex items-center gap-4 bg-slate-800/80 border border-amber-500/30 rounded-2xl px-4 py-2 shadow-inner">
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <span class="text-2xl animate-bounce">🤲</span>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+          </div>
+          <div>
+            <div class="text-[10px] text-amber-300 font-semibold uppercase tracking-wider">手中彈珠總數</div>
+            <div class="text-xl font-black text-amber-400 flex items-baseline gap-1">
+              <span id="headerTotalMarbles">0</span>
+              <span class="text-xs text-slate-400 font-normal">/ 40 顆</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-8 w-px bg-slate-700"></div>
+
+        <!-- 音效開關與功能鈕 -->
+        <div class="flex items-center gap-2">
+          <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-amber-400 transition" title="開關音效">
+            🔊
+          </button>
+          <button onclick="openMistakesModal()" class="px-3 py-1.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-700 text-xs text-rose-300 font-bold flex items-center gap-1 transition">
+            📕 錯題本 (<span id="headerMistakeCount">0</span>)
+          </button>
+          <button onclick="openCertificateModal()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-xs text-amber-300 font-bold flex items-center gap-1 transition">
+            🏆 封神狀
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 四天連假天數切換標籤 (Tabs) -->
+    <div class="max-w-7xl mx-auto mt-2.5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <button onclick="switchDay(1)" id="tabDay1" class="day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border">
+        <span class="flex items-center gap-1.5">
+          <span>🎒</span> Day 1：語文與探索
+        </span>
+        <span id="tabBadge1" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-300">0/10</span>
+      </button>
+
+      <button onclick="switchDay(2)" id="tabDay2" class="day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border">
+        <span class="flex items-center gap-1.5">
+          <span>⚙️</span> Day 2：數字與度量
+        </span>
+        <span id="tabBadge2" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-300">0/10</span>
+      </button>
+
+      <button onclick="switchDay(3)" id="tabDay3" class="day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border">
+        <span class="flex items-center gap-1.5">
+          <span>🌿</span> Day 3：自然與力量
+        </span>
+        <span id="tabBadge3" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-300">0/10</span>
+      </button>
+
+      <button onclick="switchDay(4)" id="tabDay4" class="day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border">
+        <span class="flex items-center gap-1.5">
+          <span>🏛️</span> Day 4：社會與全能
+        </span>
+        <span id="tabBadge4" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-300">0/10</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主遊戲區域 -->
+  <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- 左半部/上半部：滾珠軌道物理模擬 Canvas 與機關台 (5 columns on desktop) -->
+    <section class="lg:col-span-5 flex flex-col gap-3">
+      <div class="glass-card rounded-3xl p-4 border border-indigo-500/30 shadow-2xl relative overflow-hidden flex flex-col">
+        <!-- 軌道狀態頂部標題 -->
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎢</span>
+            <div>
+              <h2 id="trackTitle" class="text-sm font-bold text-indigo-300">Day 1 特技滾珠軌道</h2>
+              <p class="text-[11px] text-slate-400">答對解鎖軌道 ➜ 點燃全線滾珠</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="trackProgressText" class="text-xs font-black text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-600/50">
+              0 / 10 節軌道已連接
+            </span>
+          </div>
+        </div>
+
+        <!-- Canvas 滾珠畫布 -->
+        <div class="relative bg-slate-950/90 rounded-2xl border-2 border-indigo-900/80 shadow-inner overflow-hidden flex justify-center items-center">
+          <canvas id="marbleCanvas" width="480" height="580" class="w-full max-w-[480px] h-auto block"></canvas>
+
+          <!-- 覆蓋層：當所有軌道拼裝完成時的按鈕 -->
+          <div id="launchOverlay" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center transition-all duration-300 hidden">
+            <div class="text-5xl mb-2 animate-bounce">🎊</div>
+            <h3 class="text-2xl font-black text-amber-300 game-font mb-1">十節特技軌道全部貫通！</h3>
+            <p class="text-xs text-slate-300 mb-4">彈珠發射閥門已解鎖，準備好接收掉入你手中的 10 顆彈珠了嗎？</p>
+            <button onclick="triggerGrandMarbleLaunch()" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:to-pink-400 text-slate-950 font-black text-lg shadow-xl shadow-amber-500/30 transform hover:scale-105 transition flex items-center gap-2">
+              <span>🚀</span> 釋放 10 顆彈珠掉入手中！
+            </button>
+          </div>
+        </div>
+
+        <!-- 軌道下方機關資訊與按鈕 -->
+        <div class="mt-3 flex items-center justify-between text-xs bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-slate-300">本關收集：</span>
+            <span id="currentDayMarblesWon" class="font-bold text-amber-300">0</span>
+            <span class="text-slate-400">/ 10 顆</span>
+          </div>
+          <button onclick="replayCurrentTrackAnimation()" class="px-3 py-1 rounded-lg bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60 transition flex items-center gap-1">
+            <span>🔄</span> 演示目前軌道
+          </button>
+        </div>
+      </div>
+
+      <!-- 彈珠展示盒 (40顆收集進度縮圖) -->
+      <div class="glass-card rounded-2xl p-3 border border-slate-700/60 text-xs">
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-bold text-slate-300 flex items-center gap-1">
+            <span>💎</span> 手中 40 顆水晶彈珠盒
+          </span>
+          <span class="text-slate-400 text-[11px]" id="marbleCollectedRatio">0 / 40</span>
+        </div>
+        <div id="marblePouchGrid" class="grid grid-cols-10 gap-1.5 p-2 bg-slate-950/70 rounded-xl border border-slate-800">
+          <!-- 40顆彈珠由 JS 動態生成 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 右半部/下半部：題目作答區與知識錦囊 (7 columns on desktop) -->
+    <section class="lg:col-span-7 flex flex-col gap-3">
+      <!-- 關卡題目卡片 -->
+      <div class="glass-card rounded-3xl p-5 border border-indigo-500/30 shadow-2xl flex flex-col justify-between min-h-[460px]">
+        <!-- 題目狀態資訊條 -->
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <span id="subjectBadge" class="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow">
+                國語科
+              </span>
+              <span id="curriculumTopic" class="text-xs font-semibold text-indigo-300">
+                第一課〈心的悄悄話〉
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-slate-400">關卡進度：</span>
+              <span id="questionStep" class="font-black text-amber-400 text-sm">第 1 / 10 題</span>
+              <div class="flex items-center gap-1 bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-800">
+                <span class="text-rose-400 text-xs">❤️</span>
+                <span id="livesDisplay" class="font-bold text-slate-200">3/3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 題目內文 -->
+          <div class="my-4">
+            <div class="text-xs text-amber-400/90 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+              <span>🎯</span> 挑戰目標：答對以解鎖第 <span id="targetTrackIndex">1</span> 節軌道！
+            </div>
+            <h3 id="questionText" class="text-lg md:text-xl font-bold text-slate-100 leading-relaxed">
+              題目載入中...
+            </h3>
+          </div>
+
+          <!-- 四個選項按鈕 (A, B, C, D) -->
+          <div id="optionsContainer" class="grid grid-cols-1 gap-2.5 my-5">
+            <!-- 由 JS 動態渲染 -->
+          </div>
+        </div>
+
+        <!-- 知識錦囊與詳解卡片 (作答後展開) -->
+        <div id="explanationBox" class="mt-2 p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/40 hidden transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span id="resultIcon" class="text-xl">✅</span>
+              <span id="resultTitle" class="font-bold text-sm text-emerald-400">回答正確！解鎖特技軌道！</span>
+            </div>
+            <button onclick="nextQuestion()" id="nextBtn" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-xs font-bold text-white shadow-md transition transform hover:scale-105 flex items-center gap-1">
+              <span>下一題</span> <span>➜</span>
+            </button>
+          </div>
+          <p id="explanationText" class="text-xs md:text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            詳解說明內容
+          </p>
+        </div>
+
+        <!-- 底部快捷導航列 (10題題目號碼圓圈) -->
+        <div class="border-t border-slate-800 pt-3 mt-4 flex items-center justify-between">
+          <div class="text-[11px] text-slate-400">本回合題號跳轉：</div>
+          <div id="questionNumberDots" class="flex items-center gap-1.5">
+            <!-- 10 個小圓點 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 連假學習進度統計小卡 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
+        <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+          <div class="text-slate-400 text-[10px]">國語領域</div>
+          <div class="font-bold text-indigo-300 text-sm mt-0.5" id="statMandarin">12 題</div>
+        </div>
+        <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+          <div class="text-slate-400 text-[10px]">數學領域</div>
+          <div class="font-bold text-emerald-300 text-sm mt-0.5" id="statMath">8 題</div>
+        </div>
+        <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+          <div class="text-slate-400 text-[10px]">自然與社會</div>
+          <div class="font-bold text-amber-300 text-sm mt-0.5" id="statSciSoc">12 題</div>
+        </div>
+        <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+          <div class="text-slate-400 text-[10px]">英語與綜合</div>
+          <div class="font-bold text-pink-300 text-sm mt-0.5" id="statEngInt">8 題</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 頁腳 -->
+  <footer class="max-w-7xl mx-auto px-4 py-3 text-center text-slate-500 text-xs border-t border-slate-900 w-full mt-4">
+    108課綱 康軒版 國小三年級上學期 第一次期中考連假複習自主學習平台 ｜ 軌道連鎖物理模擬
+  </footer>
+
+  <!-- ==================== 彈出視窗：錯題本 Modal ==================== -->
+  <div id="mistakesModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-2xl w-full rounded-3xl p-6 border border-rose-500/40 shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📕</span>
+          <h3 class="text-lg font-bold text-rose-300">個人專屬錯題本</h3>
+        </div>
+        <button onclick="closeMistakesModal()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+
+      <div id="mistakesList" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs md:text-sm">
+        <!-- 錯題由 JS 生成 -->
+      </div>
+
+      <div class="border-t border-slate-800 pt-3 mt-3 flex justify-between items-center text-xs">
+        <span class="text-slate-400">隨時複習錯題，考前不再犯同樣錯誤！</span>
+        <button onclick="clearMistakes()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 border border-slate-700 transition">
+          清空記錄
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 彈出視窗：學霸封神狀 (獎狀) Modal ==================== -->
+  <div id="certificateModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-gradient-to-b from-amber-50 to-orange-50 text-slate-900 max-w-xl w-full rounded-3xl p-6 md:p-8 border-4 border-amber-400 shadow-2xl relative">
+      <!-- 關閉按鈕 -->
+      <button onclick="closeCertificateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
+
+      <!-- 獎狀邊框花紋 -->
+      <div class="border-2 border-dashed border-amber-700/40 p-4 rounded-2xl text-center">
+        <div class="text-4xl mb-1">👑</div>
+        <h2 class="text-2xl font-black text-amber-900 game-font tracking-wide">
+          期中考全科神童・封神狀
+        </h2>
+        <div class="text-[11px] text-amber-700 font-semibold mb-4">108 課綱 康軒小三上第一次段考 榮譽認證</div>
+
+        <p class="text-sm text-slate-700 leading-relaxed mb-4">
+          茲證明小學霸 <input id="studentNameInput" type="text" value="三年級無敵冒險王" class="bg-amber-100/80 font-bold border-b-2 border-amber-500 text-center px-2 py-0.5 text-amber-900 outline-none w-44"> 同學：<br>
+          在本次四天連假全科總複習挑戰中，成功解鎖 40 節特技軌道，集齊全部
+          <span class="font-black text-amber-600 text-base"> 40 顆魔法璀璨彈珠 </span>
+          並完整掌握國語、數學、自然、社會、英語及綜合活動核心考點，成績斐然，特頒此狀以資表揚！
+        </p>
+
+        <!-- 獎章圖示與評等 -->
+        <div class="flex justify-around items-center bg-amber-100/60 p-3 rounded-xl border border-amber-300 my-4 text-xs font-bold text-amber-950">
+          <div>
+            <div class="text-slate-500 text-[10px]">手中彈珠數</div>
+            <div class="text-lg text-amber-700 font-black"><span id="certMarbles">0</span> / 40</div>
+          </div>
+          <div class="h-8 w-px bg-amber-300"></div>
+          <div>
+            <div class="text-slate-500 text-[10px]">學力評等</div>
+            <div class="text-lg text-emerald-700 font-black" id="certRank">全科軌道大宗師</div>
+          </div>
+          <div class="h-8 w-px bg-amber-300"></div>
+          <div>
+            <div class="text-slate-500 text-[10px]">連假任務狀態</div>
+            <div class="text-lg text-indigo-700 font-black" id="certStatus">四關全勝</div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center text-[11px] text-slate-500 mt-3 pt-2 border-t border-amber-200">
+          <span>指導單位：康軒學習評鑑小組</span>
+          <span id="certDate">2026 年 10 月</span>
+        </div>
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button onclick="window.print()" class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm shadow transition">
+          🖨️ 列印 / 儲存獎狀
+        </button>
+        <button onclick="closeCertificateModal()" class="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JavaScript: 題庫資料與核心邏輯 ==================== -->
+  <script>
+    /* ========================================================================
+       1. 40 題康軒版小三上第一次期中考題庫（平均分佈四天連假，每關10題，選項平衡）
+       ======================================================================== */
+    const GAME_QUESTIONS = [
+      /* Day 1: 啟程篇・語文與探索 (10題) */
+      {
+        id: 1, day: 1, subject: "國語", topic: "第一課〈心的悄悄話〉",
+        stem: "在國語第一課〈心的悄悄話〉中，「悄」字的最主要的部首是什麼？",
+        options: [
+          { text: "心（忄）部", isCorrect: true },
+          { text: "肖部", isCorrect: false },
+          { text: "月部", isCorrect: false },
+          { text: "口部", isCorrect: false }
+        ],
+        explanation: "「悄」是左邊的心部（忄），右邊是「肖」，表示心中安靜、隱祕的感覺，如「悄悄話」、「靜悄悄」。"
+      },
+      {
+        id: 2, day: 1, subject: "國語", topic: "第二課〈妙故事點點名〉",
+        stem: "〈妙故事點點名〉這篇課文中，作者用「點點名」主要想告訴我們什麼讀書樂趣？",
+        options: [
+          { text: "上課遲到必須去黑板前被老師點名", isCorrect: false },
+          { text: "讀書就像和許多有趣的故事角色交朋友", isCorrect: true },
+          { text: "圖書館的書太多，只能隨便翻翻", isCorrect: false },
+          { text: "故事書裡的主角都在互相比賽打架", isCorrect: false }
+        ],
+        explanation: "課文透過「點點名」的想像，將讀過的故事書主角（如孫悟空、白雪公主）串連在一起，描寫閱讀帶來的美好友誼與樂趣。"
+      },
+      {
+        id: 3, day: 1, subject: "國語", topic: "第三課〈繞口令村〉",
+        stem: "「大樹旁有條長長的小河，河水嘩啦啦的流著。」句子中的「嘩啦啦」使用了哪種感官摹寫修辭？",
+        options: [
+          { text: "視覺摹寫", isCorrect: false },
+          { text: "味覺摹寫", isCorrect: false },
+          { text: "聽覺摹寫", isCorrect: true },
+          { text: "觸覺摹寫", isCorrect: false }
+        ],
+        explanation: "「嘩啦啦」是描摹流水發出的聲音，屬於描寫聲音的「聽覺摹寫」。"
+      },
+      {
+        id: 4, day: 1, subject: "國語", topic: "語文統整活動一",
+        stem: "在語文學習地圖中，把一件事情清楚寫出來的「記敘四要素」是指哪四個？",
+        options: [
+          { text: "金、木、水、火", isCorrect: false },
+          { text: "東、西、南、北", isCorrect: false },
+          { text: "春、夏、秋、冬", isCorrect: false },
+          { text: "人、時、地、事", isCorrect: true }
+        ],
+        explanation: "記敘文的四要素就是：誰（人物）、什麼時候（時間）、在什麼地方（地點）、發生了什麼事（事情）。"
+      },
+      {
+        id: 5, day: 1, subject: "英語", topic: "Unit 1: Classroom English",
+        stem: "早上上學，英文老師走進教室說：\"Good morning, class!\"，全體同學最有禮貌的回答是？",
+        options: [
+          { text: "Good morning, teacher!", isCorrect: true },
+          { text: "Good night, teacher!", isCorrect: false },
+          { text: "Goodbye, teacher!", isCorrect: false },
+          { text: "Thank you, teacher!", isCorrect: false }
+        ],
+        explanation: "\"Good morning\" 是早安，同學應禮貌回應 \"Good morning, teacher!\"；Good night 是晚安（睡前說）。"
+      },
+      {
+        id: 6, day: 1, subject: "英語", topic: "Unit 1: School Supplies",
+        stem: "句子 \"I have a new pencil and an eraser.\" 中，單字 \"eraser\" 是指哪一種文具？",
+        options: [
+          { text: "彩色筆", isCorrect: false },
+          { text: "橡皮擦", isCorrect: true },
+          { text: "剪刀", isCorrect: false },
+          { text: "鉛筆盒", isCorrect: false }
+        ],
+        explanation: "pencil 是鉛筆，eraser 是橡皮擦，ruler 是尺。"
+      },
+      {
+        id: 7, day: 1, subject: "數學", topic: "單元一：10000以內的數",
+        stem: "四位數「5084」，國字讀作什麼？",
+        options: [
+          { text: "五千八十四", isCorrect: false },
+          { text: "五百零八十四", isCorrect: false },
+          { text: "五千零八十四", isCorrect: true },
+          { text: "五千八百零四", isCorrect: false }
+        ],
+        explanation: "百位是 0 要讀作「零」，所以 5084 讀作「五千零八十四」。"
+      },
+      {
+        id: 8, day: 1, subject: "自然", topic: "第一單元：植物的身體",
+        stem: "觀察校園裡的植物，如果一個莖節上剛好對稱長出「兩片葉子」，這種生長方式叫做什麼？",
+        options: [
+          { text: "互生", isCorrect: false },
+          { text: "輪生", isCorrect: false },
+          { text: "叢生", isCorrect: false },
+          { text: "對生", isCorrect: true }
+        ],
+        explanation: "一個節長一片葉是「互生」；一個節長兩片對稱葉是「對生」；一個節長三片以上是「輪生」。"
+      },
+      {
+        id: 9, day: 1, subject: "社會", topic: "第一單元：我的家庭",
+        stem: "爸爸的親哥哥，按照傳統親屬稱謂，我們應該稱呼他為什麼？",
+        options: [
+          { text: "伯父（伯伯）", isCorrect: true },
+          { text: "叔叔", isCorrect: false },
+          { text: "舅舅", isCorrect: false },
+          { text: "姑丈", isCorrect: false }
+        ],
+        explanation: "爸爸的哥哥稱為伯父（伯伯）；爸爸的弟弟稱為叔叔；媽媽的兄弟才稱為舅舅。"
+      },
+      {
+        id: 10, day: 1, subject: "綜合", topic: "第一單元：新學期新適應",
+        stem: "三年級重新編班，面對新同學和新老師，下列哪一種做法是最好的適應方式？",
+        options: [
+          { text: "自己坐在角落不理任何人", isCorrect: false },
+          { text: "主動微笑打招呼，共同遵守班級約定", isCorrect: true },
+          { text: "只要別人不聽我的話就生氣大叫", isCorrect: false },
+          { text: "隨便拿別人的文具不借也不說", isCorrect: false }
+        ],
+        explanation: "主動微笑、有禮貌打招呼，並遵守班級公共約定，是建立好人緣與融入新班級的最佳方式。"
+      },
+
+      /* Day 2: 探索篇・數字與度量 (10題) */
+      {
+        id: 11, day: 2, subject: "數學", topic: "單元一：位值概念",
+        stem: "在四位數「7362」中，數字「3」位在哪一個位值？它表示多少？",
+        options: [
+          { text: "十位，表示 30", isCorrect: false },
+          { text: "百位，表示 300", isCorrect: true },
+          { text: "千位，表示 3000", isCorrect: false },
+          { text: "個位，表示 3", isCorrect: false }
+        ],
+        explanation: "7362 從右邊起分別是個位(2)、十位(6)、百位(3)、千位(7)。百位的 3 表示 300。"
+      },
+      {
+        id: 12, day: 2, subject: "數學", topic: "單元二：四位數加減",
+        stem: "圖書館原來有 1450 本故事書，又新買進了 320 本，現在圖書館一共有幾本書？",
+        options: [
+          { text: "1130 本", isCorrect: false },
+          { text: "1720 本", isCorrect: false },
+          { text: "1770 本", isCorrect: true },
+          { text: "1800 本", isCorrect: false }
+        ],
+        explanation: "1450 + 320 = 1770 本。"
+      },
+      {
+        id: 13, day: 2, subject: "數學", topic: "單元三：毫米 (mm)",
+        stem: "拿尺測量長度時，1 公分（cm）剛好等於多少毫米（mm）？",
+        options: [
+          { text: "5 毫米", isCorrect: false },
+          { text: "10 毫米", isCorrect: true },
+          { text: "50 毫米", isCorrect: false },
+          { text: "100 毫米", isCorrect: false }
+        ],
+        explanation: "尺上的 1 小格是 1 毫米（mm），1 大格是 1 公分（cm），所以 1 公分 = 10 毫米。"
+      },
+      {
+        id: 14, day: 2, subject: "國語", topic: "第四課〈小丑魚和海葵〉",
+        stem: "〈小丑魚和海葵〉課文中，海葵用有毒觸手保護小丑魚，小丑魚幫海葵清理碎屑與引誘小魚，這種互相幫助的生物關係稱為？",
+        options: [
+          { text: "競爭關係", isCorrect: false },
+          { text: "寄生關係", isCorrect: false },
+          { text: "互利共生", isCorrect: true },
+          { text: "敵對關係", isCorrect: false }
+        ],
+        explanation: "兩者生活在一起，彼此都能得到好處，在自然界中稱為「互利共生」。"
+      },
+      {
+        id: 15, day: 2, subject: "國語", topic: "成語智慧",
+        stem: "成語「胸有成竹」通常用來形容一個人做事如何？",
+        options: [
+          { text: "心裡很害怕退縮", isCorrect: false },
+          { text: "胸口長了一根竹子", isCorrect: false },
+          { text: "事前已經有周詳的計畫與把握", isCorrect: true },
+          { text: "喜歡拿竹子打人", isCorrect: false }
+        ],
+        explanation: "「胸有成竹」原指畫竹子前心裡已有竹子的形象；後比喻做事前已經有了成熟的想法與必勝把握。"
+      },
+      {
+        id: 16, day: 2, subject: "自然", topic: "第一單元：植物的器官",
+        stem: "植物的「根」深深扎入泥土中，除了牢牢固定植物外，最主要的生活機能是什麼？",
+        options: [
+          { text: "進行光合作用製造養分", isCorrect: false },
+          { text: "吸引蜜蜂和蝴蝶來採花蜜", isCorrect: false },
+          { text: "結出甜美的果實", isCorrect: false },
+          { text: "吸收土壤中的水分和養分", isCorrect: true }
+        ],
+        explanation: "植物的根主要負責吸收土壤中的水分與養分，並固定植物體。"
+      },
+      {
+        id: 17, day: 2, subject: "社會", topic: "第二單元：家庭與倫理",
+        stem: "小明生病發燒時，爸爸媽媽細心帶他去看醫生、照顧他吃藥，這展現了家庭的哪一項主要功能？",
+        options: [
+          { text: "保護與照顧功能", isCorrect: true },
+          { text: "娛樂休閒功能", isCorrect: false },
+          { text: "賺取金錢功能", isCorrect: false },
+          { text: "班級自治功能", isCorrect: false }
+        ],
+        explanation: "家庭是保護生命、照顧家人健康的重要避風港，此為「保護與照顧功能」。"
+      },
+      {
+        id: 18, day: 2, subject: "英語", topic: "Unit 2: Colors and Animals",
+        stem: "句子 \"Look! The frog is green and it can jump.\" 中，青蛙是什麼顏色的？",
+        options: [
+          { text: "藍色 (Blue)", isCorrect: false },
+          { text: "綠色 (Green)", isCorrect: true },
+          { text: "黃色 (Yellow)", isCorrect: false },
+          { text: "紅色 (Red)", isCorrect: false }
+        ],
+        explanation: "\"green\" 是綠色，frog 是青蛙。"
+      },
+      {
+        id: 19, day: 2, subject: "自然", topic: "第二單元：生活中的力",
+        stem: "用手捏黏土時黏土變扁了；用腳踢皮球時皮球向前滾動。這表示「力」可以改變物體的什麼？",
+        options: [
+          { text: "只有顏色變深", isCorrect: false },
+          { text: "只有氣味變香", isCorrect: false },
+          { text: "形狀與運動狀態", isCorrect: true },
+          { text: "物體會直接消失", isCorrect: false }
+        ],
+        explanation: "受力後，物體的「形狀」（如黏土變扁）或「運動狀態」（如皮球滾動）會產生改變。"
+      },
+      {
+        id: 20, day: 2, subject: "綜合", topic: "家事小達人",
+        stem: "關於家裡的家事分工，哪一種觀念是三年級小朋友應該具備的？",
+        options: [
+          { text: "家事全部都是媽媽一個人的工作", isCorrect: false },
+          { text: "我年紀還小，只要負責玩玩具和看電視就好", isCorrect: false },
+          { text: "每個人都是家庭一分子，應按能力分擔家事", isCorrect: true },
+          { text: "除非爸爸給我零用錢，否則我絕對不做家事", isCorrect: false }
+        ],
+        explanation: "家是大家共同的，每位家庭成員都應依照年齡和能力主動分擔家事（如摺衣服、收碗筷、整理書桌）。"
+      },
+
+      /* Day 3: 躍進篇・自然與力量 (10題) */
+      {
+        id: 21, day: 3, subject: "自然", topic: "第二單元：磁鐵的特性",
+        stem: "磁鐵通常有兩個磁極，它們在科學上分別用什麼英文字母代號標示？",
+        options: [
+          { text: "A 極 與 B 極", isCorrect: false },
+          { text: "N 極 與 S 極", isCorrect: true },
+          { text: "X 極 與 Y 極", isCorrect: false },
+          { text: "L 極 與 R 極", isCorrect: false }
+        ],
+        explanation: "磁鐵兩端磁力最強，指北的一端是 N 極（North），指南的一端是 S 極（South）。"
+      },
+      {
+        id: 22, day: 3, subject: "自然", topic: "第二單元：磁鐵的特性",
+        stem: "把兩根長條形磁鐵的「N 極」與「N 極」互相靠近時，會發生什麼現象？",
+        options: [
+          { text: "緊緊吸在一起", isCorrect: false },
+          { text: "互相推開（排斥）", isCorrect: true },
+          { text: "完全沒有任何感覺", isCorrect: false },
+          { text: "磁鐵立刻融化", isCorrect: false }
+        ],
+        explanation: "磁鐵磁極的特徵是：同極相斥（N遇N或S遇S互相排斥）、異極相吸（N遇S互相吸引）。"
+      },
+      {
+        id: 23, day: 3, subject: "自然", topic: "第二單元：磁鐵隔物吸鐵",
+        stem: "把磁鐵放在薄紙或塑膠墊板下方，磁鐵還能吸引墊板上方的鐵製迴紋針嗎？為什麼？",
+        options: [
+          { text: "可以，因為磁力可以穿透薄薄的非鐵物體", isCorrect: true },
+          { text: "不行，只要有東西隔著磁力就會完全消失", isCorrect: false },
+          { text: "只有在晚上才能吸得起來", isCorrect: false },
+          { text: "迴紋針會變成塑膠", isCorrect: false }
+        ],
+        explanation: "磁鐵的磁力具有穿透性，能穿透薄紙、塑膠板或水等非鐵物質來吸引鐵製品。"
+      },
+      {
+        id: 24, day: 3, subject: "數學", topic: "單元四：乘法",
+        stem: "一盒彩色筆有 12 支，老師買了 4 盒準備獎勵同學，一共有幾支彩色筆？",
+        options: [
+          { text: "16 支", isCorrect: false },
+          { text: "24 支", isCorrect: false },
+          { text: "36 支", isCorrect: false },
+          { text: "48 支", isCorrect: true }
+        ],
+        explanation: "12 × 4 = 48 支。"
+      },
+      {
+        id: 25, day: 3, subject: "數學", topic: "單元三：長度換算",
+        stem: "小華測量一枝全新鉛筆的長度是「7 公分 5 毫米」，換算成全部都是毫米（mm）是多少？",
+        options: [
+          { text: "75 毫米", isCorrect: true },
+          { text: "57 毫米", isCorrect: false },
+          { text: "705 毫米", isCorrect: false },
+          { text: "750 毫米", isCorrect: false }
+        ],
+        explanation: "1 公分 = 10 毫米，7 公分 = 70 毫米；70 + 5 = 75 毫米。"
+      },
+      {
+        id: 26, day: 3, subject: "國語", topic: "第五課〈飛舞的絲帶〉",
+        stem: "〈飛舞的絲帶〉一文中，選手在體操場上揮舞絲帶像彩虹般美麗，這篇課文主要告訴我們什麼道理？",
+        options: [
+          { text: "絲帶要買越貴的越好", isCorrect: false },
+          { text: "優美的身手與成就來自專注與不斷練習", isCorrect: true },
+          { text: "只要揮動絲帶就可以不用讀書", isCorrect: false },
+          { text: "雨天在戶外跑步很危險", isCorrect: false }
+        ],
+        explanation: "課文透過韻律體操絲帶的優美動作，展現選手背後刻苦練習、專注堅持的精神。"
+      },
+      {
+        id: 27, day: 3, subject: "國語", topic: "語文修辭技巧",
+        stem: "「夏天的太陽像一顆大火球，把柏油路烤得熱烘烘。」這句話運用了哪一種修辭手法？",
+        options: [
+          { text: "擬人修辭", isCorrect: false },
+          { text: "譬喻修辭", isCorrect: true },
+          { text: "排比修辭", isCorrect: false },
+          { text: "設問修辭", isCorrect: false }
+        ],
+        explanation: "句子中有喻詞「像」，把太陽比喻成大火球，這是典型的「譬喻修辭」。"
+      },
+      {
+        id: 28, day: 3, subject: "社會", topic: "第三單元：班級自治",
+        stem: "班級要選出新班長或模範生時，下列哪一種方式最符合公平、公正的民主精神？",
+        options: [
+          { text: "誰的力氣最大就由誰直接當班長", isCorrect: false },
+          { text: "誰帶最多零食分大家吃就選誰", isCorrect: false },
+          { text: "由全班同學提名候選人，再公開舉手或投票表決", isCorrect: true },
+          { text: "老師抽籤隨便決定", isCorrect: false }
+        ],
+        explanation: "班級自治的民主程序是：先由大家提名合適人選，再透過公開表決投票，少數服從多數。"
+      },
+      {
+        id: 29, day: 3, subject: "英語", topic: "Daily English",
+        stem: "當同學借你鉛筆，你對他說 \"Thank you!\"，同學最有禮貌的回答是？",
+        options: [
+          { text: "You're welcome!", isCorrect: true },
+          { text: "I'm sorry!", isCorrect: false },
+          { text: "No, I am not.", isCorrect: false },
+          { text: "See you later!", isCorrect: false }
+        ],
+        explanation: "\"You're welcome!\" 是「不客氣！」；Thank you 的標準禮貌回應。"
+      },
+      {
+        id: 30, day: 3, subject: "綜合", topic: "校園防災守則",
+        stem: "在教室上課時突然發生強烈地震，防災演練的「抗震保命三步驟口訣」是什麼？",
+        options: [
+          { text: "大叫、狂奔、跳窗", isCorrect: false },
+          { text: "站立、拍照、發呆", isCorrect: false },
+          { text: "趴下、掩護、穩住", isCorrect: true },
+          { text: "收書包、排隊、拿水壺", isCorrect: false }
+        ],
+        explanation: "地震保命三原則：趴下（Drop）、掩護（Cover）、穩住（Hold on），保護頭部躲在堅固桌下。"
+      },
+
+      /* Day 4: 終極篇・社會與全能 (10題) */
+      {
+        id: 31, day: 4, subject: "國語", topic: "多音字辨析",
+        stem: "「銀【行】」與「【行】走」中的「行」字，注音分別是什麼？",
+        options: [
+          { text: "ㄒㄧㄥˊ 與 ㄏㄤˊ", isCorrect: false },
+          { text: "ㄏㄤˊ 與 ㄒㄧㄥˊ", isCorrect: true },
+          { text: "ㄏㄤˊ 與 ㄏㄤˊ", isCorrect: false },
+          { text: "ㄒㄧㄥˊ 與 ㄒㄧㄥˊ", isCorrect: false }
+        ],
+        explanation: "從事商業營業的機構讀作「銀ㄏㄤˊ（行）」；走路、實行讀作「ㄒㄧㄥˊ（行）走」。"
+      },
+      {
+        id: 32, day: 4, subject: "國語", topic: "第六課〈小女生〉",
+        stem: "〈小女生〉這篇課文中，小女孩從害羞到充滿自信展現才華，這課主要想鼓勵我們？",
+        options: [
+          { text: "肯定自我價值，快樂自信地面對學習與成長", isCorrect: true },
+          { text: "只要當女生才需要有自信", isCorrect: false },
+          { text: "永遠都不要說話，保持沉默最安全", isCorrect: false },
+          { text: "生氣時隨便對同學發脾氣", isCorrect: false }
+        ],
+        explanation: "課文描寫成長中自我認同的重要性，鼓勵小朋友發現自己的優點，自信成長。"
+      },
+      {
+        id: 33, day: 4, subject: "數學", topic: "單元一：四位數比大小",
+        stem: "請比較下列四個四位數的大小：甲=4089、乙=4809、丙=4908、丁=4890，哪一個數最大？",
+        options: [
+          { text: "甲 (4089)", isCorrect: false },
+          { text: "乙 (4809)", isCorrect: false },
+          { text: "丁 (4890)", isCorrect: false },
+          { text: "丙 (4908)", isCorrect: true }
+        ],
+        explanation: "千位數都是 4；比較百位數：丙的百位是 9，其他是 0 或 8，所以 4908 最大。"
+      },
+      {
+        id: 34, day: 4, subject: "數學", topic: "單元二：兩步驟加減應用",
+        stem: "小華存錢筒有 2500 元，買工具書花了 680 元，媽媽又獎勵他 500 元，小華現在有幾元？",
+        options: [
+          { text: "2320 元", isCorrect: true },
+          { text: "2280 元", isCorrect: false },
+          { text: "2420 元", isCorrect: false },
+          { text: "2120 元", isCorrect: false }
+        ],
+        explanation: "2500 - 680 = 1820 元；1820 + 500 = 2320 元。"
+      },
+      {
+        id: 35, day: 4, subject: "自然", topic: "第一單元：植物的蒸散作用",
+        stem: "植物吸收水分後，葉片背面的哪一個微小構造會把多餘的水分以水蒸氣散失到空氣中？",
+        options: [
+          { text: "氣孔", isCorrect: true },
+          { text: "花瓣", isCorrect: false },
+          { text: "果皮", isCorrect: false },
+          { text: "葉柄", isCorrect: false }
+        ],
+        explanation: "植物葉片（尤其是下表皮）具有許多微小的「氣孔」，能進行氣體交換與水分的「蒸散作用」。"
+      },
+      {
+        id: 36, day: 4, subject: "社會", topic: "第一單元：親屬稱謂",
+        stem: "媽媽的父母親，我們在台灣通常親切地稱呼他們為什麼？",
+        options: [
+          { text: "爺爺、奶奶", isCorrect: false },
+          { text: "伯父、伯母", isCorrect: false },
+          { text: "外公、外婆（阿公、阿嬤）", isCorrect: true },
+          { text: "叔叔、嬸嬸", isCorrect: false }
+        ],
+        explanation: "爸爸的父母親是爺爺奶奶；媽媽的父母親是外公外婆（在閩南語或口語習慣中亦常稱阿公阿嬤）。"
+      },
+      {
+        id: 37, day: 4, subject: "社會", topic: "第三單元：校園安全",
+        stem: "下課時間在校園裡活動，下列哪一種行為才是安全守規矩的表現？",
+        options: [
+          { text: "在樓梯轉角處快速奔跑衝刺", isCorrect: false },
+          { text: "在走廊上放慢腳步輕聲走，注意轉角行人", isCorrect: true },
+          { text: "爬到二樓的欄杆上吹風", isCorrect: false },
+          { text: "拿掃把當武器追逐打鬧", isCorrect: false }
+        ],
+        explanation: "走廊和樓梯都是容易滑倒碰撞的地方，慢步走、靠右行、不奔跑才能保障自己與他人的安全。"
+      },
+      {
+        id: 38, day: 4, subject: "英語", topic: "Unit 2: Numbers & Questions",
+        stem: "老師指著桌上的 5 把直尺問：\"How many rulers are there?\"，正確回答是？",
+        options: [
+          { text: "There are three rulers.", isCorrect: false },
+          { text: "There are four rulers.", isCorrect: false },
+          { text: "There are five rulers.", isCorrect: true },
+          { text: "There is one ruler.", isCorrect: false }
+        ],
+        explanation: "5 是 five，數量大於 1 時要用複數問答：\"There are five rulers.\""
+      },
+      {
+        id: 39, day: 4, subject: "綜合", topic: "友伴交往與溝通",
+        stem: "下課與同學玩遊戲發生意見不合時，下列哪一種做法最有助於解決問題？",
+        options: [
+          { text: "大哭大鬧讓所有人都不能玩", isCorrect: false },
+          { text: "立刻動手推人", isCorrect: false },
+          { text: "先冷靜下來，聆聽對方的想法並好好溝通", isCorrect: true },
+          { text: "拉攏其他同學孤立他不跟他講話", isCorrect: false }
+        ],
+        explanation: "面對同儕爭執，先深呼吸緩和情緒，聆聽對方理由並平和討論出雙方都能接受的方案。"
+      },
+      {
+        id: 40, day: 4, subject: "綜合/全科", topic: "期中全能學習",
+        stem: "升上三年級功課變多，要在段考前兼顧複習與休閒，最好的方法是什麼？",
+        options: [
+          { text: "平常都不讀，考前一晚熬夜不睡覺硬背", isCorrect: false },
+          { text: "擬定規律的作息與讀書計畫，每天定時定量完成", isCorrect: true },
+          { text: "把作業丟給爸爸媽媽幫忙寫", isCorrect: false },
+          { text: "只讀喜歡的科目，討厭的科目完全不碰", isCorrect: false }
+        ],
+        explanation: "三年級科目變多元，良好的時間管理（擬定作息表、按步就班複習）是成為優秀學霸的關鍵祕訣！"
+      }
+    ];
+
+    /* ========================================================================
+       2. 特技滾珠軌道 10 節模組定義 (每個 Day 都有 10 節特技軌道連接)
+       ======================================================================== */
+    const TRACK_PIECES_META = [
+      { id: 1, name: "星空加速坡道", color: "#38bdf8", type: "ramp" },
+      { id: 2, name: "彩虹 S 型迴環", color: "#f43f5e", type: "curve" },
+      { id: 3, name: "霓虹彈跳高台", color: "#fbbf24", type: "bouncer" },
+      { id: 4, name: "水晶引流透明管", color: "#a855f7", type: "tube" },
+      { id: 5, name: "齒輪雙向換向輪", color: "#34d399", type: "gear" },
+      { id: 6, name: "重力大擺盪滑道", color: "#f97316", type: "swing" },
+      { id: 7, name: "風車旋轉螺旋盤", color: "#ec4899", type: "spiral" },
+      { id: 8, name: "極速金屬階梯", color: "#60a5fa", type: "steps" },
+      { id: 9, name: "龍捲風聚能漏斗", color: "#c084fc", type: "vortex" },
+      { id: 10, name: "金色引導接球槽", color: "#eab308", type: "exit" }
+    ];
+
+    /* 40 顆水晶彈珠色彩與稱號 */
+    const MARBLE_TYPES = [
+      { name: "天狼星水晶", color: "#38bdf8", glow: "#7dd3fc" },
+      { name: "火龍心晶", color: "#ef4444", glow: "#fca5a5" },
+      { name: "翡翠靈石", color: "#10b981", glow: "#6ee7b7" },
+      { name: "黃金琥珀", color: "#f59e0b", glow: "#fde68a" },
+      { name: "紫晶幻境", color: "#8b5cf6", glow: "#c4b5fd" },
+      { name: "極光琉璃", color: "#06b6d4", glow: "#67e8f9" },
+      { name: "櫻花粉晶", color: "#ec4899", glow: "#fbcfe8" },
+      { name: "青金神珠", color: "#3b82f6", glow: "#93c5fd" },
+      { name: "烈焰瑪瑙", color: "#ea580c", glow: "#fdba74" },
+      { name: "星塵神珠", color: "#eab308", glow: "#fef08a" }
+    ];
+
+    /* ========================================================================
+       3. 遊戲狀態管理 (Game State)
+       ======================================================================== */
+    let currentDay = 1;
+    let currentQuestionIndexInDay = 0; // 0..9
+    let lives = 3;
+    let soundEnabled = true;
+
+    // 每一天的進度：已解鎖軌道數（0..10）、答對狀態、收集彈珠數
+    let dayProgress = {
+      1: { unlockedTracks: 0, answers: Array(10).fill(null), marblesWon: 0 },
+      2: { unlockedTracks: 0, answers: Array(10).fill(null), marblesWon: 0 },
+      3: { unlockedTracks: 0, answers: Array(10).fill(null), marblesWon: 0 },
+      4: { unlockedTracks: 0, answers: Array(10).fill(null), marblesWon: 0 }
+    };
+
+    let mistakeRecords = []; // 錯題集
+    let audioCtx = null;
+
+    /* ========================================================================
+       4. Web Audio 原生音效合成器 (完全無外部依賴)
+       ======================================================================== */
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+          // 清脆金屬軌道連接聲 + 歡呼上升音
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc1.type = 'triangle';
+          osc2.type = 'sine';
+
+          osc1.frequency.setValueAtTime(523.25, now); // C5
+          osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+          osc2.frequency.setValueAtTime(659.25, now); // E5
+          osc2.frequency.exponentialRampToValueAtTime(1046.50, now + 0.2); // C6
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.35);
+          osc2.stop(now + 0.35);
+
+        } else if (type === 'wrong') {
+          // 柔和低音提示音
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(160, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+
+        } else if (type === 'marble_roll') {
+          // 滾珠滾動時的清脆叮噹聲
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          const freq = 600 + Math.random() * 400;
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.005, now + 0.08);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+
+        } else if (type === 'catch_hand') {
+          // 彈珠掉進手中的飽滿清脆撞擊音
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.exponentialRampToValueAtTime(1320, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+
+        } else if (type === 'fanfare') {
+          // 通關大慶祝音效
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.35);
+          });
+        }
+      } catch (e) {
+        console.warn("Audio Context init/play error:", e);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundToggleBtn');
+      btn.textContent = soundEnabled ? '🔊' : '🔇';
+      btn.classList.toggle('text-amber-400', soundEnabled);
+      btn.classList.toggle('text-slate-500', !soundEnabled);
+    }
+
+    /* ========================================================================
+       5. HTML5 Canvas 特技滾珠軌道模擬繪圖系統
+       ======================================================================== */
+    const canvas = document.getElementById('marbleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 軌道十個節點的座標路線 (從頂端料槽連到底部大手掌)
+    const TRACK_NODES = [
+      { x: 240, y: 35, label: "彈珠發射儲存艙" }, // 頂部料槽
+      { x: 380, y: 80, label: "1. 加速起點" },
+      { x: 100, y: 130, label: "2. S型滑道" },
+      { x: 390, y: 180, label: "3. 彈跳跳板" },
+      { x: 90, y: 230, label: "4. 水晶管" },
+      { x: 240, y: 280, label: "5. 旋轉齒輪" },
+      { x: 390, y: 330, label: "6. 擺盪滑梯" },
+      { x: 90, y: 380, label: "7. 風車螺旋" },
+      { x: 380, y: 430, label: "8. 階梯輪" },
+      { x: 240, y: 480, label: "9. 旋風漏斗" },
+      { x: 240, y: 530, label: "10. 金色出口" }
+    ];
+
+    // 動畫中正在滾動的彈珠陣列
+    let activeMarbles = [];
+    let animationFrameId = null;
+    let handGlowPulse = 0;
+
+    class PhysicsMarble {
+      constructor(color, delay = 0) {
+        this.color = color;
+        this.delay = delay; // 延遲發射禎數
+        this.t = 0; // 當前軌道進度 0..maxSegments
+        this.maxT = dayProgress[currentDay].unlockedTracks;
+        this.speed = 0.045 + Math.random() * 0.015;
+        this.size = 11;
+        this.finished = false;
+        this.caughtInHand = false;
+        this.sparkles = [];
+      }
+
+      update() {
+        if (this.delay > 0) {
+          this.delay--;
+          return;
+        }
+        if (this.finished) return;
+
+        this.t += this.speed;
+
+        // 音效節點觸發
+        const currentSegment = Math.floor(this.t);
+        if (Math.abs(this.t - currentSegment) < this.speed) {
+          playSound('marble_roll');
+        }
+
+        // 當彈珠達到已解鎖軌道的末端
+        if (this.t >= this.maxT) {
+          this.t = this.maxT;
+          this.finished = true;
+
+          // 若解鎖到第 10 節，掉進手中！
+          if (this.maxT >= 10 && !this.caughtInHand) {
+            this.caughtInHand = true;
+            playSound('catch_hand');
+            triggerHandCatchEffect();
+          }
+        }
+      }
+
+      getPosition() {
+        if (this.delay > 0) {
+          return { x: TRACK_NODES[0].x + (Math.random() - 0.5) * 20, y: TRACK_NODES[0].y };
+        }
+        const seg = Math.floor(this.t);
+        const frac = this.t - seg;
+        const p1 = TRACK_NODES[seg];
+        const p2 = TRACK_NODES[Math.min(seg + 1, TRACK_NODES.length - 1)];
+
+        if (!p1 || !p2) return { x: 240, y: 530 };
+
+        // 貝茲曲線微彎效果
+        const cx = (p1.x + p2.x) / 2 + (seg % 2 === 0 ? 30 : -30);
+        const cy = (p1.y + p2.y) / 2;
+
+        const x = (1 - frac) * (1 - frac) * p1.x + 2 * (1 - frac) * frac * cx + frac * frac * p2.x;
+        const y = (1 - frac) * (1 - frac) * p1.y + 2 * (1 - frac) * frac * cy + frac * frac * p2.y;
+        return { x, y };
+      }
+
+      draw(ctx) {
+        if (this.delay > 0) return;
+        const pos = this.getPosition();
+
+        // 陰影
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(pos.x + 2, pos.y + 4, this.size * 0.9, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fill();
+
+        // 彈珠外體漸層
+        const grad = ctx.createRadialGradient(
+          pos.x - this.size * 0.3, pos.y - this.size * 0.3, this.size * 0.1,
+          pos.x, pos.y, this.size
+        );
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, this.color);
+        grad.addColorStop(1, '#090d16');
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // 玻璃外圈光澤
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.stroke();
+
+        // 高光點
+        ctx.beginPath();
+        ctx.arc(pos.x - this.size * 0.35, pos.y - this.size * 0.35, this.size * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function triggerHandCatchEffect() {
+      handGlowPulse = 25;
+      // 增加今日彈珠數
+      const cur = dayProgress[currentDay];
+      if (cur.marblesWon < cur.unlockedTracks) {
+        cur.marblesWon = cur.unlockedTracks;
+        updateUI();
+      }
+    }
+
+    function renderTrackCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const unlocked = dayProgress[currentDay].unlockedTracks;
+
+      // 1. 繪製頂部彈珠儲存料槽 (Hopper)
+      ctx.save();
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(180, 15);
+      ctx.lineTo(300, 15);
+      ctx.lineTo(260, 45);
+      ctx.lineTo(220, 45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 料槽內剩餘彈珠提示
+      const remainingMarbles = Math.max(0, 10 - unlocked);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`待發射: ${remainingMarbles} 顆`, 240, 30);
+      ctx.restore();
+
+      // 2. 繪製 10 段軌道
+      for (let i = 1; i <= 10; i++) {
+        const p1 = TRACK_NODES[i - 1];
+        const p2 = TRACK_NODES[i];
+        const isUnlocked = i <= unlocked;
+        const meta = TRACK_PIECES_META[i - 1];
+
+        const cx = (p1.x + p2.x) / 2 + ((i - 1) % 2 === 0 ? 30 : -30);
+        const cy = (p1.y + p2.y) / 2;
+
+        ctx.save();
+        if (isUnlocked) {
+          // 已解鎖：厚軌道 + 霓虹發光
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(cx, cy, p2.x, p2.y);
+          ctx.lineWidth = 14;
+          ctx.strokeStyle = '#0f172a';
+          ctx.stroke();
+
+          // 軌道底槽
+          ctx.lineWidth = 9;
+          ctx.strokeStyle = meta.color;
+          ctx.stroke();
+
+          // 軌道高光中心線
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+
+          // 軌道節點裝飾 (齒輪/彈跳標記)
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = meta.color;
+          ctx.stroke();
+
+          // 軌道編號名稱標籤
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = (i % 2 === 1) ? 'left' : 'right';
+          ctx.fillText(meta.name, p2.x + (i % 2 === 1 ? 12 : -12), p2.y + 3);
+
+        } else {
+          // 鎖定中：灰色虛線藍圖
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(cx, cy, p2.x, p2.y);
+          ctx.setLineDash([6, 6]);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+          ctx.stroke();
+
+          // 鎖定圖示
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`🔒 軌道 ${i}`, cx, cy);
+        }
+        ctx.restore();
+      }
+
+      // 3. 繪製底部玩家的大手掌 (Player's Open Hand 🤲✨)
+      ctx.save();
+      const handX = 240;
+      const handY = 550;
+
+      // 手掌光芒特效
+      if (handGlowPulse > 0) {
+        ctx.beginPath();
+        ctx.arc(handX, handY, 35 + handGlowPulse, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(250, 204, 21, ${handGlowPulse / 50})`;
+        ctx.fill();
+        handGlowPulse *= 0.92;
+        if (handGlowPulse < 0.5) handGlowPulse = 0;
+      }
+
+      // 繪製手掌與托盤
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.ellipse(handX, handY + 12, 45, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 大手掌 Emoji / 圖騰渲染
+      ctx.font = '36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🤲', handX, handY);
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('玩家的手心', handX, handY + 22);
+
+      // 手中收集滿載標籤
+      if (unlocked >= 10) {
+        ctx.fillStyle = '#4ade80';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('✨ 10顆彈珠入庫 ✨', handX, handY - 26);
+      }
+      ctx.restore();
+
+      // 4. 更新與繪製所有滾動中的彈珠
+      for (let i = 0; i < activeMarbles.length; i++) {
+        const marble = activeMarbles[i];
+        marble.update();
+        marble.draw(ctx);
+      }
+
+      // 循環繪製
+      animationFrameId = requestAnimationFrame(renderTrackCanvas);
+    }
+
+    // 發射單顆測試彈珠 (答對一題時演示)
+    function previewRollSingleMarble(targetStep) {
+      activeMarbles = [];
+      const color = MARBLE_TYPES[(targetStep - 1) % MARBLE_TYPES.length].color;
+      const marble = new PhysicsMarble(color, 0);
+      marble.maxT = targetStep;
+      activeMarbles.push(marble);
+    }
+
+    // 觸發十顆彈珠齊發盛典！
+    function triggerGrandMarbleLaunch() {
+      document.getElementById('launchOverlay').classList.add('hidden');
+      playSound('fanfare');
+      activeMarbles = [];
+
+      for (let i = 0; i < 10; i++) {
+        const color = MARBLE_TYPES[i % MARBLE_TYPES.length].color;
+        const marble = new PhysicsMarble(color, i * 18); // 間隔發射
+        marble.maxT = 10;
+        activeMarbles.push(marble);
+      }
+
+      // 同步手中彈珠
+      dayProgress[currentDay].marblesWon = 10;
+      updateUI();
+    }
+
+    function replayCurrentTrackAnimation() {
+      const unlocked = dayProgress[currentDay].unlockedTracks;
+      if (unlocked === 0) {
+        alert("目前還沒有解鎖軌道喔！請先回答右側題目！");
+        return;
+      }
+      activeMarbles = [];
+      for (let i = 0; i < unlocked; i++) {
+        const color = MARBLE_TYPES[i % MARBLE_TYPES.length].color;
+        const marble = new PhysicsMarble(color, i * 14);
+        marble.maxT = unlocked;
+        activeMarbles.push(marble);
+      }
+    }
+
+    /* ========================================================================
+       6. 題庫問答系統與互動邏輯
+       ======================================================================== */
+    function getQuestionsForDay(day) {
+      return GAME_QUESTIONS.filter(q => q.day === day);
+    }
+
+    function getCurrentQuestion() {
+      const dayQs = getQuestionsForDay(currentDay);
+      return dayQs[currentQuestionIndexInDay];
+    }
+
+    function loadQuestionUI() {
+      const q = getCurrentQuestion();
+      if (!q) return;
+
+      const dayQs = getQuestionsForDay(currentDay);
+      const isAnswered = dayProgress[currentDay].answers[currentQuestionIndexInDay] !== null;
+
+      // 頂部資訊
+      document.getElementById('subjectBadge').textContent = q.subject + "領域";
+      document.getElementById('curriculumTopic').textContent = q.topic;
+      document.getElementById('questionStep').textContent = `第 ${currentQuestionIndexInDay + 1} / 10 題`;
+      document.getElementById('targetTrackIndex').textContent = currentQuestionIndexInDay + 1;
+      document.getElementById('questionText').textContent = q.stem;
+
+      // 生命值
+      document.getElementById('livesDisplay').textContent = `${lives}/3`;
+
+      // 選項按鈕渲染 (確保均衡，A/B/C/D 標籤)
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+
+      const letters = ['A', 'B', 'C', 'D'];
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `option-btn w-full text-left p-3.5 rounded-2xl border text-sm md:text-base font-medium flex items-center justify-between transition ${
+          isAnswered ? 'cursor-default' : 'hover:border-indigo-400 bg-slate-900/80 border-slate-700/80'
+        }`;
+
+        // 檢查是否已作答樣式
+        if (isAnswered) {
+          const userChoice = dayProgress[currentDay].answers[currentQuestionIndexInDay];
+          if (opt.isCorrect) {
+            btn.classList.add('bg-emerald-950/90', 'border-emerald-500', 'text-emerald-300');
+          } else if (userChoice === idx && !opt.isCorrect) {
+            btn.classList.add('bg-rose-950/90', 'border-rose-500', 'text-rose-300');
+          } else {
+            btn.classList.add('bg-slate-900/40', 'border-slate-800', 'text-slate-500');
+          }
+          btn.disabled = true;
+        }
+
+        btn.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs bg-slate-800 border border-slate-600 text-amber-300">
+              ${letters[idx]}
+            </span>
+            <span>${opt.text}</span>
+          </div>
+          <span class="option-check text-base"></span>
+        `;
+
+        if (!isAnswered) {
+          btn.onclick = () => handleAnswer(idx);
+        }
+
+        optionsContainer.appendChild(btn);
+      });
+
+      // 知識錦囊與詳解框
+      const explanationBox = document.getElementById('explanationBox');
+      if (isAnswered) {
+        const userChoice = dayProgress[currentDay].answers[currentQuestionIndexInDay];
+        const isCorrect = q.options[userChoice]?.isCorrect;
+
+        explanationBox.classList.remove('hidden');
+        document.getElementById('resultIcon').textContent = isCorrect ? '🎉' : '💡';
+        document.getElementById('resultTitle').textContent = isCorrect ? '回答正確！解鎖第 ' + (currentQuestionIndexInDay + 1) + ' 節特技軌道！' : '別灰心！這題觀念很重要，請看錦囊：';
+        document.getElementById('resultTitle').className = isCorrect ? 'font-bold text-sm text-emerald-400' : 'font-bold text-sm text-amber-400';
+        document.getElementById('explanationText').textContent = q.explanation;
+      } else {
+        explanationBox.classList.add('hidden');
+      }
+
+      // 下方題號跳轉圓點
+      renderQuestionDots();
+    }
+
+    function handleAnswer(choiceIdx) {
+      const q = getCurrentQuestion();
+      const isCorrect = q.options[choiceIdx].isCorrect;
+
+      // 記錄作答
+      dayProgress[currentDay].answers[currentQuestionIndexInDay] = choiceIdx;
+
+      if (isCorrect) {
+        playSound('correct');
+        // 解鎖軌道進度 (每答對一題累加軌道)
+        if (currentQuestionIndexInDay + 1 > dayProgress[currentDay].unlockedTracks) {
+          dayProgress[currentDay].unlockedTracks = currentQuestionIndexInDay + 1;
+        }
+
+        // 發射測試彈珠
+        previewRollSingleMarble(dayProgress[currentDay].unlockedTracks);
+
+        // 如果 10 題皆通關，彈出大發射層
+        if (dayProgress[currentDay].unlockedTracks >= 10) {
+          setTimeout(() => {
+            document.getElementById('launchOverlay').classList.remove('hidden');
+          }, 800);
+        }
+      } else {
+        playSound('wrong');
+        lives = Math.max(0, lives - 1);
+
+        // 收錄至錯題本
+        if (!mistakeRecords.some(m => m.id === q.id)) {
+          mistakeRecords.push({
+            id: q.id,
+            day: q.day,
+            subject: q.subject,
+            stem: q.stem,
+            correctAnswer: q.options.find(o => o.isCorrect).text,
+            explanation: q.explanation
+          });
+        }
+      }
+
+      updateUI();
+      loadQuestionUI();
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndexInDay < 9) {
+        currentQuestionIndexInDay++;
+      } else {
+        // 若當前 Day 完成，提示切換下一天
+        if (currentDay < 4) {
+          if (confirm(`太棒了！Day ${currentDay} 的題目已全部完成！要前往 Day ${currentDay + 1} 繼續收集彈珠嗎？`)) {
+            switchDay(currentDay + 1);
+            return;
+          }
+        } else {
+          alert("🎉 恭喜你完成了全部四天連假的學習任務！快點擊上方「🏆 封神狀」查看專屬獎狀！");
+          openCertificateModal();
+        }
+      }
+      loadQuestionUI();
+    }
+
+    function renderQuestionDots() {
+      const dotsContainer = document.getElementById('questionNumberDots');
+      dotsContainer.innerHTML = '';
+      const dayAnswers = dayProgress[currentDay].answers;
+      const dayQs = getQuestionsForDay(currentDay);
+
+      for (let i = 0; i < 10; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-6 h-6 rounded-lg text-[10px] font-bold flex items-center justify-center transition border ${
+          i === currentQuestionIndexInDay ? 'ring-2 ring-amber-400 font-black' : ''
+        }`;
+
+        if (dayAnswers[i] === null) {
+          dot.classList.add('bg-slate-800', 'border-slate-700', 'text-slate-400');
+        } else if (dayQs[i].options[dayAnswers[i]].isCorrect) {
+          dot.classList.add('bg-emerald-600', 'border-emerald-400', 'text-white');
+        } else {
+          dot.classList.add('bg-rose-700', 'border-rose-400', 'text-white');
+        }
+
+        dot.textContent = i + 1;
+        dot.onclick = () => {
+          currentQuestionIndexInDay = i;
+          loadQuestionUI();
+        };
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    /* ========================================================================
+       7. 切換天數 (Day 1..4) 與全域狀態更新
+       ======================================================================== */
+    function switchDay(day) {
+      currentDay = day;
+      currentQuestionIndexInDay = 0;
+
+      // 更新軌道標題
+      const titles = [
+        "Day 1【小詩與探索】特技滾珠軌道",
+        "Day 2【數字與齒輪】特技滾珠軌道",
+        "Day 3【自然與磁力】特技滾珠軌道",
+        "Day 4【社會與全能】特技滾珠軌道"
+      ];
+      document.getElementById('trackTitle').textContent = titles[day - 1];
+
+      // 若該日已全解鎖但未發射，展示發射覆蓋
+      if (dayProgress[day].unlockedTracks >= 10 && dayProgress[day].marblesWon < 10) {
+        document.getElementById('launchOverlay').classList.remove('hidden');
+      } else {
+        document.getElementById('launchOverlay').classList.add('hidden');
+      }
+
+      updateUI();
+      loadQuestionUI();
+      renderTrackCanvas();
+    }
+
+    function updateUI() {
+      // 1. 計算總彈珠數
+      let totalMarbles = 0;
+      for (let d = 1; d <= 4; d++) {
+        totalMarbles += dayProgress[d].marblesWon;
+        // Tab 進度標籤
+        const badge = document.getElementById(`tabBadge${d}`);
+        if (badge) {
+          badge.textContent = `${dayProgress[d].marblesWon}/10 顆`;
+          badge.className = dayProgress[d].marblesWon === 10
+            ? 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40'
+            : 'text-[11px] px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-300';
+        }
+      }
+
+      document.getElementById('headerTotalMarbles').textContent = totalMarbles;
+      document.getElementById('marbleCollectedRatio').textContent = `${totalMarbles} / 40 顆已入袋`;
+
+      // 2. 當前天數軌道進度文字
+      const unlocked = dayProgress[currentDay].unlockedTracks;
+      document.getElementById('trackProgressText').textContent = `${unlocked} / 10 節軌道已連接`;
+      document.getElementById('currentDayMarblesWon').textContent = dayProgress[currentDay].marblesWon;
+
+      // 3. Tab 高亮樣式
+      for (let d = 1; d <= 4; d++) {
+        const tab = document.getElementById(`tabDay${d}`);
+        if (d === currentDay) {
+          tab.className = 'day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-indigo-400 shadow-md';
+        } else {
+          tab.className = 'day-tab flex-1 min-w-[150px] py-2 px-3 rounded-xl font-bold text-xs md:text-sm flex items-center justify-between transition border bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-750';
+        }
+      }
+
+      // 4. 錯題本數
+      document.getElementById('headerMistakeCount').textContent = mistakeRecords.length;
+
+      // 5. 渲染 40 顆水晶彈珠盒縮圖
+      renderMarblePouch(totalMarbles);
+
+      // 6. 獎狀數據連動
+      document.getElementById('certMarbles').textContent = totalMarbles;
+      if (totalMarbles >= 40) {
+        document.getElementById('certRank').textContent = "👑 全科軌道封神王";
+        document.getElementById('certStatus').textContent = "四天連假大滿貫";
+      } else if (totalMarbles >= 30) {
+        document.getElementById('certRank').textContent = "🌟 卓越軌道大師";
+        document.getElementById('certStatus').textContent = "三關全勝邁向高峰";
+      } else {
+        document.getElementById('certRank').textContent = "🚀 潛力探索者";
+      }
+    }
+
+    function renderMarblePouch(totalMarbles) {
+      const grid = document.getElementById('marblePouchGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < 40; i++) {
+        const item = document.createElement('div');
+        const isCollected = i < totalMarbles;
+        const meta = MARBLE_TYPES[i % MARBLE_TYPES.length];
+
+        item.className = 'aspect-square rounded-full flex items-center justify-center transition-all duration-300 relative';
+
+        if (isCollected) {
+          item.style.background = `radial-gradient(circle at 35% 35%, #ffffff 0%, ${meta.color} 50%, #000000 100%)`;
+          item.style.boxShadow = `0 0 8px ${meta.glow}`;
+          item.title = `已收集：${meta.name} (第 ${i + 1} 顆)`;
+        } else {
+          item.className += ' bg-slate-850 border border-slate-800 opacity-40';
+          item.innerHTML = '<span class="text-[8px] text-slate-600">•</span>';
+          item.title = `第 ${i + 1} 顆 (尚未解鎖)`;
+        }
+
+        grid.appendChild(item);
+      }
+    }
+
+    /* ========================================================================
+       8. 錯題本 Modal 與 封神狀 Modal 控制
+       ======================================================================== */
+    function openMistakesModal() {
+      const list = document.getElementById('mistakesList');
+      list.innerHTML = '';
+
+      if (mistakeRecords.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-8 text-slate-400">
+            <span class="text-3xl block mb-2">🎉</span>
+            目前還沒有任何答錯的題目，表現超棒！
+          </div>
+        `;
+      } else {
+        mistakeRecords.forEach((m, idx) => {
+          const div = document.createElement('div');
+          div.className = 'p-3 rounded-2xl bg-slate-900 border border-rose-900/50 space-y-1.5';
+          div.innerHTML = `
+            <div class="flex items-center justify-between text-xs text-rose-300 font-bold">
+              <span>#${idx + 1} 【${m.subject}・Day ${m.day}】</span>
+            </div>
+            <div class="font-bold text-slate-100">${m.stem}</div>
+            <div class="text-emerald-400 font-semibold">正確答案：${m.correctAnswer}</div>
+            <div class="text-slate-400 text-xs bg-slate-950 p-2 rounded-xl mt-1 border border-slate-800">${m.explanation}</div>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      document.getElementById('mistakesModal').classList.remove('hidden');
+    }
+
+    function closeMistakesModal() {
+      document.getElementById('mistakesModal').classList.add('hidden');
+    }
+
+    function clearMistakes() {
+      if (confirm("確定要清空所有的錯題紀錄嗎？")) {
+        mistakeRecords = [];
+        updateUI();
+        closeMistakesModal();
+      }
+    }
+
+    function openCertificateModal() {
+      const now = new Date();
+      document.getElementById('certDate').textContent = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
+      document.getElementById('certificateModal').classList.remove('hidden');
+    }
+
+    function closeCertificateModal() {
+      document.getElementById('certificateModal').classList.add('hidden');
+    }
+
+    /* ========================================================================
+       9. 遊戲啟動初始化
+       ======================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      // 依序啟動
+      updateUI();
+      loadQuestionUI();
+      renderTrackCanvas();
+    });
+  </script>
+</body>
+</html>
